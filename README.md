@@ -1,44 +1,53 @@
-# ISAC_PLS (Physical Layer Security for ISAC)
+# ISAC_PLS: Physical Layer Security for Integrated Sensing and Communications
 
-Integrated Sensing and Communications (ISAC) enables a base station (BS) to use shared spectrum, waveform, and hardware for both wireless communication and environment sensing. This repository focuses on **Physical Layer Security (PLS)** for ISAC systems under realistic attacks such as eavesdropping, pilot spoofing/contamination, and echo/signal manipulation.
+`ISAC_PLS` is a simulation-first research/engineering repository for building and evaluating **physical-layer security (PLS)** methods in **Integrated Sensing and Communications (ISAC)** systems.
+
+In ISAC, a base station (BS) shares spectrum, waveform, and hardware for both communication and sensing. That coupling creates new attack surfaces and requires **joint security design** across both domains.
+
+---
 
 ## Why this project
 
-Traditional communication-only security is not enough for ISAC systems because an adversary can attack either side:
-- **Communication side:** passive eavesdropping, active jamming, pilot contamination.
-- **Sensing side:** false echo injection, replay/manipulated reflections, track deception.
+Communication-only security is insufficient in ISAC because attackers can target either side:
 
-Our goal is to design a BS strategy that **jointly preserves secrecy and sensing integrity** under practical constraints.
+- **Communication-side threats:** passive eavesdropping, active jamming, pilot contamination.
+- **Sensing-side threats:** false echo injection, replay/manipulated reflections, track deception.
+
+This project studies BS strategies that preserve:
+
+1. **secrecy** for users,  
+2. **integrity** for sensing outputs,
+
+under practical power, latency, and uncertainty constraints.
 
 ---
 
 ## Problem statement
 
 Design an ISAC-enabled BS that transmits a joint waveform to:
+
 1. serve legitimate communication users,
 2. sense one or more targets/objects,
 3. minimize information leakage to eavesdroppers,
-4. remain robust against signal/echo manipulation.
+4. remain robust to pilot and echo manipulation.
 
-This requires joint optimization of beamforming, power allocation, artificial noise, pilot policy, and robust detection/authentication logic.
+This requires joint optimization of beamforming, power allocation, artificial noise, pilot policy, and robust sensing authentication logic.
 
 ---
 
-## Core PLS constraints for an ISAC-enabled BS
+## Core ISAC-PLS constraints
 
-A practical ISAC-PLS design should satisfy the following constraints.
+A practical design typically enforces the following.
 
-### 1) Secrecy-rate constraints (communication security)
-Ensure each legitimate user has minimum secrecy performance:
+### 1) Secrecy-rate constraints
 
 \[
 R_{s,k} = \left[R_{u,k} - R_{e,k}^{(ub)}\right]^+ \ge R_{s,k}^{\min}, \quad \forall k
 \]
 
-Where:
 - \(R_{u,k}\): achievable rate of user \(k\)
 - \(R_{e,k}^{(ub)}\): upper-bound estimate of eavesdropper rate against user \(k\)
-- \([x]^+=\max(x,0)\)
+- \([x]^+ = \max(x,0)\)
 
 ### 2) User SINR / QoS constraints
 
@@ -46,86 +55,77 @@ Where:
 \mathrm{SINR}_k \ge \gamma_k^{\min}, \quad \forall k
 \]
 
-Guarantees communication reliability while security controls (e.g., artificial noise) are active.
-
 ### 3) Sensing quality constraints
-Depending on use-case, include one or more:
-- minimum detection probability \(P_D \ge P_D^{\min}\)
-- bounded false alarm \(P_{FA} \le P_{FA}^{\max}\)
-- Cramér–Rao Bound (CRB) threshold for parameter estimation
-- beampattern gain constraints in target direction(s)
 
-### 4) Total and per-antenna power constraints
+Examples:
+
+- \(P_D \ge P_D^{\min}\)
+- \(P_{FA} \le P_{FA}^{\max}\)
+- CRB threshold on estimation quality
+- target-direction beampattern gain requirements
+
+### 4) Total and per-antenna power limits
 
 \[
 \mathrm{Tr}(\mathbf{Q}_s + \mathbf{Q}_{an}) \le P_{\text{tot}}, \qquad
 [\mathbf{Q}_s + \mathbf{Q}_{an}]_{m,m} \le P_m^{\max},\ \forall m
 \]
 
-Where \(\mathbf{Q}_s\) is information covariance and \(\mathbf{Q}_{an}\) is artificial-noise covariance.
+- \(\mathbf{Q}_s\): information covariance
+- \(\mathbf{Q}_{an}\): artificial-noise covariance
 
 ### 5) Beampattern / spatial leakage constraints
-Control sidelobes and leakage toward suspicious sectors:
 
 \[
 G(\theta) \le G_{\text{sus}}^{\max}, \quad \theta \in \Theta_{\text{sus}}
 \]
 
-Optionally impose null-steering constraints toward known/estimated attacker angles.
+Optional null-steering can be added toward suspicious angles.
 
 ### 6) Robustness to CSI uncertainty
-Let uncertain channels belong to bounded sets (or probabilistic models):
 
 \[
 \mathbf{h}_k = \hat{\mathbf{h}}_k + \Delta\mathbf{h}_k,\ \|\Delta\mathbf{h}_k\|_2 \le \epsilon_k
 \]
 
-Then enforce secrecy/QoS constraints in worst-case or chance-constrained sense.
+Enforce QoS/secrecy using worst-case or chance-constrained forms.
 
-### 7) Pilot integrity / anti-contamination constraints
-Bound channel-estimation degradation and enforce pilot authentication logic:
-- randomized pilot assignment/hopping
-- anomaly score threshold on pilot residual statistics
-- reject/reweight suspicious pilot observations
+### 7) Pilot integrity constraints
 
-### 8) Echo manipulation consistency constraints (ISAC-specific)
-Reject tracks violating physics/continuity consistency:
-- range-angle-Doppler consistency across frames
-- kinematic continuity under motion model
-- multi-sensor/multi-beam cross-check (when available)
+- randomized pilot assignment/hopping,
+- residual/anomaly-threshold checks,
+- reject/reweight suspicious pilot observations.
 
-### 9) Latency and compute constraints
-Security mechanisms should fit scheduling and real-time budgets of BS stack.
+### 8) Echo manipulation consistency constraints
+
+- range-angle-Doppler consistency across frames,
+- motion-model continuity,
+- cross-beam/cross-sensor consistency (if available).
+
+### 9) Latency and compute limits
+
+Security must fit BS scheduling and real-time budgets.
 
 ### 10) Regulatory/spectral constraints
-Respect EIRP/spectral-mask/adjacent-channel limits and coexistence requirements.
+
+Respect EIRP, spectral masks, adjacent-channel limits, and coexistence requirements.
 
 ---
 
 ## Actionable BS security mechanisms
 
 1. **Joint secure beamforming**
-   - Optimize communication beams and sensing beams jointly.
 2. **Artificial noise (AN) injection**
-   - Inject AN in subspaces harmful to eavesdroppers but minimally harmful to users/sensing.
 3. **Adaptive null steering**
-   - Suppress suspicious angular sectors dynamically.
 4. **Robust optimization under uncertainty**
-   - Use worst-case / chance constraints for imperfect CSI.
-5. **Physical-layer authentication**
-   - Authenticate pilots/control with channel fingerprints (CIR/CFO/phase/angle features).
-6. **Pilot randomization and contamination detection**
-   - Pilot hopping, randomized pilot pools, residual-based anomaly detectors.
-7. **Sensing anti-spoofing logic**
-   - Track-level consistency tests and hypothesis filtering for false echoes.
-8. **Closed-loop adaptation**
-   - Online updates of beam/AN/pilot policy based on threat estimates.
+5. **Physical-layer pilot/control authentication**
+6. **Pilot randomization + contamination detection**
+7. **Sensing anti-spoofing consistency logic**
+8. **Closed-loop threat-aware adaptation**
 
 ---
 
-## A concrete optimization template (starter model)
-
-A practical initial formulation for downlink MU-MIMO ISAC:
+## Starter optimization template
 
 \[
 \begin{aligned}
@@ -144,30 +144,35 @@ A practical initial formulation for downlink MU-MIMO ISAC:
 \]
 
 Notes:
-- \(U_{\text{sense}}\) can be beampattern matching utility, mutual information, or CRB-based utility.
+
+- \(U_{\text{sense}}\) can be beampattern utility, mutual information, or CRB-based utility.
 - Non-convex terms may require SDR/SCA/alternating optimization.
-- Robust variants replace nominal constraints with worst-case/chance forms.
+- Robust variants replace nominal constraints with worst-case/chance constraints.
 
 ---
 
-## Suggested repository roadmap (implementation-oriented)
+## Repository roadmap
 
-### Phase 1: Baseline simulator
-- System/channel model (MU-MIMO OFDM optional)
-- Basic beamforming and sensing utility
-- Baseline secrecy metric computation
+### Phase 1 — Baseline simulator
 
-### Phase 2: Security mechanisms
+- System/channel model (MU-MIMO, optional OFDM)
+- Baseline beamforming and sensing utility
+- Secrecy metric computation
+
+### Phase 2 — Security mechanisms
+
 - AN-enabled secure beamforming
 - Pilot contamination attack + detector
-- Echo manipulation attack + track consistency filter
+- Echo manipulation attack + consistency filter
 
-### Phase 3: Robust optimization
+### Phase 3 — Robust optimization
+
 - CSI uncertainty models
 - Worst-case/chance-constrained solvers
 - Tradeoff sweeps (security vs sensing vs power)
 
-### Phase 4: Evaluation & reproducibility
+### Phase 4 — Evaluation & reproducibility
+
 - Config-driven experiments
 - Reproducible scripts and plots
 - Ablation studies
@@ -217,25 +222,89 @@ ISAC_PLS/
 
 ---
 
-## Evaluation metrics (minimum set)
+## Quickstart
 
-- **Communication/security:** secrecy rate, secrecy outage probability, user SINR/rate.
-- **Sensing:** detection probability, false alarm, range/velocity/angle RMSE, CRB proxy.
-- **Robustness:** performance drop under CSI error, pilot attack strength, spoofing intensity.
-- **Efficiency:** total power, per-antenna power utilization, runtime/latency per frame.
+> Current status: project is in architecture/design + simulation-planning stage.  
+> Use the commands below once the Python package structure is in place.
+
+### 1) Clone
+
+```bash
+git clone https://github.com/rajibdash/ISAC_PLS.git
+cd ISAC_PLS
+```
+
+### 2) Create environment
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate   # Windows PowerShell
+```
+
+### 3) Install dependencies
+
+```bash
+pip install -U pip
+pip install -r requirements.txt
+```
+
+### 4) Run baseline and sweeps
+
+```bash
+python experiments/run_baseline.py
+python experiments/run_security_sweeps.py
+python experiments/run_robustness.py
+```
 
 ---
 
-## Near-term TODOs
+## Configuration plan
 
-1. Define exact system assumptions (single-cell vs multi-cell, number of users/targets).
-2. Lock threat model (passive Eve, active pilot attacker, echo spoofer).
-3. Implement baseline metrics and simulation harness.
-4. Add AN-based secure beamforming baseline.
-5. Add first spoofing/contamination detectors.
+- `configs/default.yaml`: baseline system settings (antennas, users, SNR, channel options).
+- `configs/attack_scenarios.yaml`: pilot contamination and echo spoofing parameters.
+
+Recommended pattern:
+
+- keep experiment configs immutable,
+- write outputs to timestamped result directories,
+- store seed + git commit hash with each run.
+
+---
+
+## Evaluation metrics (minimum)
+
+- **Communication/security:** secrecy rate, secrecy outage probability, user SINR/rate.
+- **Sensing:** detection probability, false alarm, range/velocity/angle RMSE, CRB proxy.
+- **Robustness:** degradation under CSI error, pilot-attack strength, spoofing intensity.
+- **Efficiency:** total power, per-antenna utilization, runtime/latency per frame.
+
+---
+
+## Immediate milestones
+
+- [ ] Finalize system assumptions (single-cell vs multi-cell; users/targets).
+- [ ] Lock threat model (passive Eve, active pilot attacker, echo spoofer).
+- [ ] Implement baseline simulation harness + core metrics.
+- [ ] Add AN-based secure beamforming baseline.
+- [ ] Add first pilot/echo attack detectors.
+- [ ] Add reproducibility scripts (seeds, config snapshots, plots).
+
+---
+
+## Contribution guide (initial)
+
+1. Create a feature branch from `main`.
+2. Keep changes modular by subsystem (`beamforming/`, `sensing/`, `security/`).
+3. Add/extend tests under `tests/` for all new metrics/detectors.
+4. Include experiment config + script for reproducibility.
+5. Open a PR with:
+   - threat model assumptions,
+   - objective/constraint mapping,
+   - expected metric impact.
 
 ---
 
 ## Scope note
 
-This project starts with simulation-first prototypes for algorithmic validation. Hardware-in-the-loop and over-the-air validation can be added in later phases.
+This repository starts with **simulation-first prototypes** for algorithmic validation. Hardware-in-the-loop and OTA validation are planned for later stages.
