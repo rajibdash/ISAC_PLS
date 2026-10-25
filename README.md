@@ -2,7 +2,7 @@
 
 `ISAC_PLS` is a simulation-first research/engineering repository for building and evaluating **physical-layer security (PLS)** methods in **Integrated Sensing and Communications (ISAC)** systems.
 
-In ISAC, a base station (BS) shares spectrum, waveform, and hardware for both communication and sensing. That coupling creates new attack surfaces and requires **joint security design** across both domains.
+In ISAC, a base station (BS) shares spectrum, waveform, and hardware for both communication and sensing. That coupling creates new attack surfaces and requires **joint security design** across both communication and sensing pipelines.
 
 ---
 
@@ -15,7 +15,7 @@ Communication-only security is insufficient in ISAC because attackers can target
 
 This project studies BS/gNodeB strategies that preserve:
 
-1. **secrecy** for users,  
+1. **secrecy** for users,
 2. **integrity** for sensing outputs,
 
 under practical power, latency, and uncertainty constraints.
@@ -112,6 +112,65 @@ Respect EIRP, spectral masks, adjacent-channel limits, and coexistence requireme
 
 ---
 
+## Airspace drone tracking constraint profile (operational)
+
+For **airspace drone tracking**, the ISAC-PLS design should be treated as **safety-critical**. In this setting, secrecy/SINR constraints are necessary but not sufficient. The BS must jointly satisfy communication, sensing, integrity, and operational airspace constraints.
+
+### A) Airspace safety and mission constraints
+
+1. **Track continuity:** each authorized drone track must remain valid with bounded gap duration \(T_{\text{gap}} \le T_{\max}^{\text{gap}}\).
+2. **Track update period:** surveillance refresh interval must satisfy \(\Delta t_{\text{track}} \le \Delta t_{\max}\).
+3. **Geofence compliance:** estimated drone state must stay outside no-fly zones (or trigger immediate violation alerts).
+4. **Alert latency bound:** spoofing/jamming/deviation alerts must be raised within \(T_{\text{alert}} \le T_{\max}^{\text{alert}}\).
+5. **Separation-risk constraint:** probability of unsafe proximity events remains below a threshold.
+
+### B) Drone sensing-performance constraints
+
+For each tracked drone \(i\):
+
+\[
+\mathrm{RMSE}_{r,i} \le \delta_r,\qquad
+\mathrm{RMSE}_{v,i} \le \delta_v,\qquad
+\mathrm{RMSE}_{\theta,i} \le \delta_\theta
+\]
+
+plus detection-quality constraints:
+
+\[
+P_D \ge P_D^{\min},\qquad P_{FA} \le P_{FA}^{\max}
+\]
+
+and optional track-covariance/CRB upper bounds.
+
+### C) Drone C2 and secure-link constraints
+
+1. C2/telemetry QoS floor (SINR/reliability) per drone link.
+2. Secrecy-rate floor for sensitive command/control channels.
+3. Bounded degradation under modeled jamming power/location assumptions.
+
+### D) Identity-integrity and anti-spoofing constraints
+
+1. **ID-track consistency:** logical drone identity must remain consistent with physical kinematics.
+2. **Remote-ID plausibility checks:** claimed ID/location/velocity must be consistent with estimated state.
+3. **Echo-spoof consistency checks:** range-angle-Doppler + motion continuity across frames.
+4. **Freshness constraints:** stale/replayed observations are rejected by time-window checks.
+
+### E) Waveform, power, and regulatory constraints
+
+Retain all core ISAC constraints and additionally enforce mission-prioritized beampatterning:
+
+- higher gain along protected air corridors/authorized drone sectors,
+- nulls/leakage caps toward suspicious sectors,
+- strict EIRP and spectral-mask compliance.
+
+### F) Real-time and fail-safe constraints
+
+1. Per-frame optimization and detection pipelines must meet hard latency budgets.
+2. If optimization becomes infeasible, switch to a conservative fallback policy that preserves safety tracking and alerting.
+3. Maintain minimum service availability under packet loss, CSI degradation, or partial sensor outages.
+
+---
+
 ## Actionable BS security mechanisms
 
 1. **Joint secure beamforming**
@@ -148,6 +207,8 @@ Notes:
 - \(U_{\text{sense}}\) can be beampattern utility, mutual information, or CRB-based utility.
 - Non-convex terms may require SDR/SCA/alternating optimization.
 - Robust variants replace nominal constraints with worst-case/chance constraints.
+
+For airspace tracking deployments, an additional mission utility term can be added (e.g., track continuity and alert-timeliness score), with hard safety constraints kept non-relaxable.
 
 ---
 
@@ -187,6 +248,7 @@ ISAC_PLS/
   configs/
     default.yaml
     attack_scenarios.yaml
+    airspace_profile.yaml
   src/
     channel/
       models.py
@@ -203,6 +265,7 @@ ISAC_PLS/
       pilot_auth.py
       contamination_detector.py
       echo_spoof_detector.py
+      id_track_consistency.py
     sim/
       environment.py
       runner.py
@@ -213,18 +276,20 @@ ISAC_PLS/
     run_baseline.py
     run_security_sweeps.py
     run_robustness.py
+    run_airspace_profile.py
   notebooks/
     quickstart.ipynb
   tests/
     test_secrecy_metrics.py
     test_consistency_checks.py
+    test_id_track_consistency.py
 ```
 
 ---
 
 ## Quickstart
 
-> Current status: project is in architecture/design + simulation-planning stage.  
+> Current status: project is in architecture/design + simulation-planning stage.
 > Use the commands below once the Python package structure is in place.
 
 ### 1) Clone
@@ -255,6 +320,7 @@ pip install -r requirements.txt
 python experiments/run_baseline.py
 python experiments/run_security_sweeps.py
 python experiments/run_robustness.py
+python experiments/run_airspace_profile.py
 ```
 
 ---
@@ -263,6 +329,7 @@ python experiments/run_robustness.py
 
 - `configs/default.yaml`: baseline system settings (antennas, users, SNR, channel options).
 - `configs/attack_scenarios.yaml`: pilot contamination and echo spoofing parameters.
+- `configs/airspace_profile.yaml`: operational airspace constraints (track gap, geofence, alert latency, ID checks).
 
 Recommended pattern:
 
@@ -276,6 +343,7 @@ Recommended pattern:
 
 - **Communication/security:** secrecy rate, secrecy outage probability, user SINR/rate.
 - **Sensing:** detection probability, false alarm, range/velocity/angle RMSE, CRB proxy.
+- **Airspace tracking:** track continuity, ID-track consistency score, alert latency, geofence violation detection delay.
 - **Robustness:** degradation under CSI error, pilot-attack strength, spoofing intensity.
 - **Efficiency:** total power, per-antenna utilization, runtime/latency per frame.
 
@@ -288,6 +356,7 @@ Recommended pattern:
 - [ ] Implement baseline simulation harness + core metrics.
 - [ ] Add AN-based secure beamforming baseline.
 - [ ] Add first pilot/echo attack detectors.
+- [ ] Add ID-track consistency checks for drone tracking profile.
 - [ ] Add reproducibility scripts (seeds, config snapshots, plots).
 
 ---
