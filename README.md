@@ -13,7 +13,7 @@ Communication-only security is insufficient in ISAC because attackers can target
 - **Communication-side threats:** passive eavesdropping, active jamming, pilot contamination.
 - **Sensing-side threats:** false echo injection, replay/manipulated reflections, track deception.
 
-This project studies BS strategies that preserve:
+This project studies BS/gNodeB strategies that preserve:
 
 1. **secrecy** for users,  
 2. **integrity** for sensing outputs,
