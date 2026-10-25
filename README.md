@@ -6,7 +6,7 @@ In ISAC, a base station (BS) shares spectrum, waveform, and hardware for both co
 
 ---
 
-## Why this project
+## Why this project is needed? (WIP)
 
 Communication-only security is insufficient in ISAC because attackers can target either side:
 
