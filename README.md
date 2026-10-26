@@ -178,9 +178,9 @@ Tracking tiny, non-cooperative drones requires the base station to operate in Co
   │  │ Low Noise │────►│Downconvert│────►│    ADC    │────►│DIGITAL SELF│  │
   │  │ Amp (LNA) │     │  to Base  │     └───────────┘     │INTERFERENCE│  │
   │  └───────────┘     └───────────┘                       │CANCELLATION│  │
-  └────────────────────────────────────────────────────────┴──────┬─────┘  │
-                                                                  │        │
-                                                                  ▼        │
+  └────────────────────────────────────────────────────────┴──────┬────-┴-─┘  
+                                                                  │        
+                                                                  ▼        
   ┌────────────────────────────────────────────────────────────────────────┐
   │                         RADAR PROCESSING CORE                          │
   │                                                                        │
