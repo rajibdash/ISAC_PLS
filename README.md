@@ -15,8 +15,8 @@ Communication-only security is insufficient in ISAC because attackers can target
 
 This project studies BS/gNodeB strategies that preserve:
 
-1. **secrecy** for users,
-2. **integrity** for sensing outputs,
+1. **Secrecy** for users,
+2. **Integrity** for sensing outputs,
 
 under practical power, latency, and uncertainty constraints.
 
@@ -26,10 +26,10 @@ under practical power, latency, and uncertainty constraints.
 
 Design an ISAC-enabled BS that transmits a joint waveform to:
 
-1. serve legitimate communication users,
-2. sense one or more targets/objects,
-3. minimize information leakage to eavesdroppers,
-4. remain robust to pilot and echo manipulation.
+1. Serve legitimate communication users.
+2. Sense one or more targets/objects.
+3. Minimize information leakage to eavesdroppers.
+4. Remain robust to pilot and echo manipulation.
 
 This requires joint optimization of beamforming, power allocation, artificial noise, pilot policy, and robust sensing authentication logic.
 
@@ -108,13 +108,28 @@ Security must fit BS scheduling and real-time budgets.
 
 ### 10) Regulatory/spectral constraints
 
-Respect EIRP, spectral masks, adjacent-channel limits, and coexistence requirements.
+Respect EIRP, spectral masks, adjacent-channel limits and coexistence requirements.
 
 ---
 
 ## Airspace drone tracking constraint profile (operational)
 
 For **airspace drone tracking**, the ISAC-PLS design should be treated as **safety-critical**. In this setting, secrecy/SINR constraints are necessary but not sufficient. The BS must jointly satisfy communication, sensing, integrity, and operational airspace constraints.
+
+### A layout
+
+**Hardware-Level Signal Processing & In-Band Security**
+Tracking tiny, non-cooperative drones requires the base station to operate in Co-located Full-Duplex (FD) or near-FD mode—simultaneously transmitting communication data and listening for highly degraded radar echoes. Securing this pipeline happens at the transceiver and digital signal processing (DSP) layers.
+
+```
+[ Secure Tx Waveform ] ---> (Directional Beamforming) 
+                                         |
+                                    [Drone Echo] (Fragile, Low RCS)
+                                         v
+[Active Digital Cancellation] ---> [ Analog SIC ] ---> [ Authenticated Range/Doppler Matrix ]
+ (Protects against Jamming)    (Prevents Rx Saturation)
+
+```
 
 ### A) Airspace safety and mission constraints
 
