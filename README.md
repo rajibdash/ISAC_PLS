@@ -131,6 +131,76 @@ Tracking tiny, non-cooperative drones requires the base station to operate in Co
 
 ```
 
+```
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                        DIGITAL BASEBAND UNIT (BBU)                     │
+  │                                                                        │
+  │  ┌──────────────────────┐               ┌───────────────────────────┐  │
+  │  │  Comm Data Stream    │               │ Deterministic Sensing     │  │
+  │  │  (Internet/Voice)    │               │ Matrix (Pilots/Precoders) │  │
+  │  └──────────┬───────────┘               └─────────────┬─────────────┘  │
+  │             │                                         │                │
+  │             ▼                                         ▼                │
+  │      ┌───────────┐                             ┌───────────┐           │
+  │      │ Comm Block│                             │Sense Block│           │
+  │      └─────┬─────┘                             └─────┬─────┘           │
+  │            │                                         │                 │
+  │            └───────────────► ┌─────────┐ ◄───────────┘                 │
+  │                              │  JOINT  │                               │
+  │                              │  OFDM   │                               │
+  │                              │ RESOURCE│                               │
+  │                              │  GRID   │                               │
+  │                              └────┬────┘                               │
+  └───────────────────────────────────┼────────────────────────────────────┘
+                                      │ (Digital IQ Waveform)
+                                      ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                             RF TRANSMIT CHAIN                          │
+  │                                                                        │
+  │  ┌───────────┐     ┌───────────┐     ┌───────────┐     ┌────────────┐  │
+  │  │  Digital  │────►│    DAC    │────►│ Upconvert │────►│ Power Amp  │  │
+  │  │ Precoder  │     └───────────┘     │  to C/mmW │     │   (PA)     │  │
+  │  └───────────┘                       └───────────┘     └──────┬─────┘  │
+  └───────────────────────────────────────────────────────────────┼────────┘
+                                                                  │
+                                                                  ▼
+                                                       [ 📡 MAIN TX ANTENNA ]
+                                                                  │
+                                        ┌─────────────────────────┴────────┐
+                                        ▼ (Target Echo Reflection)
+                               [ 📡 MONOSTATIC RX ANTENNA ]
+                                        │
+                                        ▼
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                           RF RECEIVE CHAIN & PROCESSING                │
+  │                                                                        │
+  │  ┌───────────┐     ┌───────────┐     ┌───────────┐     ┌────────────┐  │
+  │  │ Low Noise │────►│Downconvert│────►│    ADC    │────►│DIGITAL SELF│  │
+  │  │ Amp (LNA) │     │  to Base  │     └───────────┘     │INTERFERENCE│  │
+  │  └───────────┘     └───────────┘                       │CANCELLATION│  │
+  └────────────────────────────────────────────────────────┴──────┬─────┘  │
+                                                                  │        │
+                                                                  ▼        │
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │                         RADAR PROCESSING CORE                          │
+  │                                                                        │
+  │    ┌──────────────────────────┐         ┌──────────────────────────┐   │
+  │    │  2D-FFT Range Doppler    │────────►│   Target Clustering &    │   │
+  │    │  Map Extraction          │         │ Tracking (CFAR / Kalman) │   │
+  │    └──────────────────────────┘         └────────────┬─────────────┘   │
+  └──────────────────────────────────────────────────────┼─────────────────┘
+                                                         │
+                                                         ▼
+                                             (Target Plot Data: r, v, θ)
+                                                         │
+                                                         ▼
+                                            ┌───────────────────────────┐
+                                            │ CENTRAL CLOUD SURVEILLANCE│
+                                            │      (Drone Warning)      │
+                                            └───────────────────────────┘
+
+```
+
 ### A) Airspace safety and mission constraints
 
 1. **Track continuity:** each authorized drone track must remain valid with bounded gap duration \(T_{\text{gap}} \le T_{\max}^{\text{gap}}\).
